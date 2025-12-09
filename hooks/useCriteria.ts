@@ -12,7 +12,8 @@ const DEFAULT_CRITERIA: Criterion[] = [
 ];
 
 export function useCriteria() {
-  const [criteria, setCriteriaState] = useState<Criterion[]>([]);
+  // Initialize with defaults immediately, then load from localStorage
+  const [criteria, setCriteriaState] = useState<Criterion[]>(DEFAULT_CRITERIA);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load criteria from localStorage on mount
@@ -24,8 +25,7 @@ export function useCriteria() {
           const parsed = JSON.parse(saved);
           setCriteriaState(parsed);
         } else {
-          setCriteriaState(DEFAULT_CRITERIA);
-          // Save defaults for first-time users
+          // Already initialized to DEFAULT_CRITERIA, just save it
           localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CRITERIA));
         }
       } catch (error) {

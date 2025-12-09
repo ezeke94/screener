@@ -75,13 +75,7 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8 grid grid-cols-1 lg:grid-cols-12">
         {/* Left Sidebar: Criteria Configuration */}
         <div className="lg:col-span-4 space-y-6">
-          {isLoadingCriteria ? (
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-              <p className="text-slate-500">Loading criteria...</p>
-            </div>
-          ) : (
-            <CriteriaPanel criteria={criteria} setCriteria={saveCriteria} />
-          )}
+          <CriteriaPanel criteria={criteria} setCriteria={saveCriteria} />
           
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <h3 className="text-indigo-900 font-semibold mb-2 flex items-center gap-2">
