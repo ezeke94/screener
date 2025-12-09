@@ -1,0 +1,7 @@
+{
+  "name": "TALC - PHYSIS Photo Screener",
+  "description": "Automated photo screening tool for mentors to ensure quality and compliance before sharing with parents.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
