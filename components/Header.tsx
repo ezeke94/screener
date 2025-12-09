@@ -1,6 +1,20 @@
 import React from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { signOut } from 'firebase/auth';
+import { auth } from '../services/firebaseConfig';
+import { LogOut } from 'lucide-react';
 
 export const Header: React.FC = () => {
+  const { user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <header className="bg-[#1a2b4b] border-b border-indigo-900 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -19,10 +33,24 @@ export const Header: React.FC = () => {
            </div>
         </div>
         
-        <div className="hidden sm:block">
-           <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-100 text-xs border border-indigo-500/30">
-             Internal Use Only
-           </span>
+        <div className="flex items-center gap-4">
+           <div className="hidden sm:block">
+             <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-100 text-xs border border-indigo-500/30">
+               Internal Use Only
+             </span>
+           </div>
+           {user && (
+             <div className="flex items-center gap-3">
+               <span className="text-indigo-200 text-sm">{user.email}</span>
+               <button
+                 onClick={handleLogout}
+                 className="flex items-center gap-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+               >
+                 <LogOut size={16} />
+                 Logout
+               </button>
+             </div>
+           )}
         </div>
       </div>
     </header>

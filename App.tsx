@@ -4,13 +4,22 @@ import { CriteriaPanel } from './components/CriteriaPanel';
 import { PhotoCard } from './components/PhotoCard';
 import { Criterion, PhotoData } from './types';
 import { analyzePhoto } from './services/geminiService';
-import { useCriteria } from './hooks/useCriteria';
+import { useAuth } from './hooks/useAuth';
+import { useSharedCriteria } from './hooks/useSharedCriteria';
+// seedSharedCriteria is available as a helper in services/criteriaService, no UI trigger
+import { LoginPage } from './components/LoginPage';
 import { Upload, Wand2, Trash2 } from 'lucide-react';
 
 export default function App() {
-  const { criteria, isLoading: isLoadingCriteria, saveCriteria } = useCriteria();
+  const { user } = useAuth();
+  const { criteria, loading: isLoadingCriteria } = useSharedCriteria();
   const [photos, setPhotos] = useState<PhotoData[]>([]);
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  // no UI state for seeding — helper remains in services/criteriaService
+
+  // NOTE: Do NOT early-return before declaring all hooks. That causes React hook-order errors
+  // because hooks must be called in the same order every render. We'll render the login
+  // page later (after defining all callbacks & state) so hooks stay stable.
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -66,7 +75,21 @@ export default function App() {
     }
   };
 
+
   const pendingCount = photos.filter(p => p.status === 'pending').length;
+
+  // Render the login page if user is not authenticated.
+  // We still keep all hooks declared above to maintain stable hook order.
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col font-sans text-slate-900">
+        <Header />
+        <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <LoginPage onLoginSuccess={() => {}} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">
@@ -75,7 +98,9 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8 grid grid-cols-1 lg:grid-cols-12">
         {/* Left Sidebar: Criteria Configuration */}
         <div className="lg:col-span-4 space-y-6">
-          <CriteriaPanel criteria={criteria} setCriteria={saveCriteria} />
+          {/* Seed button removed; seed helper remains in services/criteriaService */}
+
+          <CriteriaPanel criteria={criteria} setCriteria={() => {}} readOnly={true} />
           
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <h3 className="text-indigo-900 font-semibold mb-2 flex items-center gap-2">

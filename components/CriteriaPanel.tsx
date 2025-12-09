@@ -5,9 +5,10 @@ import { Plus, X, AlertCircle, CheckCircle2, Sliders } from 'lucide-react';
 interface CriteriaPanelProps {
   criteria: Criterion[];
   setCriteria: React.Dispatch<React.SetStateAction<Criterion[]>>;
+  readOnly?: boolean;
 }
 
-export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({ criteria, setCriteria }) => {
+export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({ criteria, setCriteria, readOnly = false }) => {
   const [newLabel, setNewLabel] = useState('');
   const [newType, setNewType] = useState<'forbidden' | 'desired'>('forbidden');
   const [newStrictness, setNewStrictness] = useState<StrictnessLevel>('Medium');
@@ -42,46 +43,50 @@ export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({ criteria, setCrite
         Screener Configuration
       </h2>
 
-      {/* Input Area - Stacked for sidebar compatibility */}
-      <div className="flex flex-col gap-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
-        <input
-          type="text"
-          value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
-          placeholder="E.g., Blurry, Closed eyes..."
-          className="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-        />
-        
-        <div className="flex gap-2">
-          <select
-            value={newType}
-            onChange={(e) => setNewType(e.target.value as 'forbidden' | 'desired')}
-            className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-sm"
-          >
-            <option value="forbidden">Forbidden</option>
-            <option value="desired">Desired</option>
-          </select>
-          
-          {newType === 'forbidden' && (
-            <select
-              value={newStrictness}
-              onChange={(e) => setNewStrictness(e.target.value as StrictnessLevel)}
-              className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-sm"
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Med</option>
-              <option value="High">High</option>
-            </select>
-          )}
-        </div>
+      {!readOnly && (
+        <>
+          {/* Input Area - Stacked for sidebar compatibility */}
+          <div className="flex flex-col gap-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder="E.g., Blurry, Closed eyes..."
+              className="w-full px-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+            />
+            
+            <div className="flex gap-2">
+              <select
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as 'forbidden' | 'desired')}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-sm"
+              >
+                <option value="forbidden">Forbidden</option>
+                <option value="desired">Desired</option>
+              </select>
+              
+              {newType === 'forbidden' && (
+                <select
+                  value={newStrictness}
+                  onChange={(e) => setNewStrictness(e.target.value as StrictnessLevel)}
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-sm"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Med</option>
+                  <option value="High">High</option>
+                </select>
+              )}
+            </div>
 
-        <button
-          onClick={handleAdd}
-          className="w-full px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm"
-        >
-          <Plus className="w-4 h-4" /> Add Criteria
-        </button>
-      </div>
+            <button
+              onClick={handleAdd}
+              className="w-full px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Plus className="w-4 h-4" /> Add Criteria
+            </button>
+          </div>
+        </>
+      )}
 
       <div className="space-y-6">
         {/* Forbidden List */}
@@ -97,24 +102,30 @@ export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({ criteria, setCrite
                   <span className="text-slate-800 font-medium text-sm break-words">{c.label}</span>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] text-slate-500 uppercase font-bold">Strictness:</span>
-                    <select
-                      value={c.strictness}
-                      onChange={(e) => handleStrictnessChange(c.id, e.target.value as StrictnessLevel)}
-                      className="text-xs border-none bg-transparent font-semibold text-indigo-600 focus:ring-0 p-0 cursor-pointer w-auto"
-                    >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
+                    {readOnly ? (
+                      <span className="text-xs font-semibold text-indigo-600">{c.strictness}</span>
+                    ) : (
+                      <select
+                        value={c.strictness}
+                        onChange={(e) => handleStrictnessChange(c.id, e.target.value as StrictnessLevel)}
+                        className="text-xs border-none bg-transparent font-semibold text-indigo-600 focus:ring-0 p-0 cursor-pointer w-auto"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    )}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRemove(c.id)}
-                  className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Remove"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => handleRemove(c.id)}
+                    className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -130,13 +141,15 @@ export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({ criteria, setCrite
             {desired.map((c) => (
               <div key={c.id} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-100 rounded-md group">
                 <span className="text-slate-800 font-medium text-sm break-words">{c.label}</span>
-                <button
-                  onClick={() => handleRemove(c.id)}
-                  className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Remove"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => handleRemove(c.id)}
+                    className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
