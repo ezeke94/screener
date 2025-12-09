@@ -133,14 +133,12 @@ export default async (req: Request, context: any) => {
     };
 
     // 7. Call Gemini API
-    // Prefer the newest available flash model; fall back through supported names.
-    // Remove legacy text-bison which is not available on newer endpoints.
+    // Use gemini-2.0-flash as the primary model.
+    // If it fails, try fallbacks for compatibility across different API versions.
     const modelCandidates = [
       'gemini-2.0-flash',
       'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash-8b',
-      'gemini-1.0-pro'
+      'gemini-1.5-pro'
     ];
 
     let response: any | null = null;
