@@ -51,7 +51,8 @@ export default async (req: Request, context: any) => {
     }
 
     // 5. Initialize Gemini
-    const googleApiKey = process.env.API_KEY;
+    // Support both API_KEY and GEMINI_API_KEY env names so local .env/.env.local works
+    const googleApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
     if (!googleApiKey) {
       return new Response(JSON.stringify({ error: "Server Configuration Error: Google API Key missing" }), { 
         status: 500,
@@ -107,21 +108,61 @@ export default async (req: Request, context: any) => {
       required: ["status", "reasons", "feedback"],
     };
 
-    // 7. Call Gemini API (1.5 Flash for cost efficiency)
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: {
-        role: 'user',
-        parts: [
-          { inlineData: { mimeType: mimeType || 'image/jpeg', data: imageBase64 } },
-          { text: promptText }
-        ]
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
+    // 7. Call Gemini API
+    // Try 'gemini-2.0-flash' first. If the model is unavailable or not
+    // supported for this method in the current API, automatically try a few
+    // fallbacks so the function remains usable in multiple environments.
+    const modelCandidates = [
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5',
+      'gemini-1.0',
+    ];
+
+    let response: any | null = null;
+    let lastErr: any = null;
+
+    for (const modelName of modelCandidates) {
+      try {
+        // Attempt to generate with the candidate model
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: mimeType || 'image/jpeg', data: imageBase64 } },
+              { text: promptText }
+            ]
+          },
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: responseSchema
+          }
+        });
+
+        // If we got a result, stop trying candidates
+        if (response && response.text) {
+          console.info(`Used model: ${modelName}`);
+          break;
+        }
+
+      } catch (err) {
+        // If the model is not found / not supported, keep trying the next
+        // candidate. Save the last error to report if no candidate works.
+        lastErr = err;
+        console.warn(`Model ${modelName} failed: ${err && err.message ? err.message : String(err)}`);
       }
-    });
+    }
+
+    if (!response || !response.text) {
+      // Nothing worked — return a helpful error that includes any last error
+      console.error('All model candidates failed', lastErr);
+      return new Response(JSON.stringify({ error: lastErr ? String(lastErr) : 'No model available' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const text = response.text;
     if (!text) throw new Error("Empty response from AI model");

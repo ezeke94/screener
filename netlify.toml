@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[dev]
+  # Use Vite dev command and connect to the configured dev port
+  command = "npm run dev"
+  # The port the framework server exposes for Netlify to proxy to
+  targetPort = 3000
+  # Netlify dev UI port
+  port = 8888
