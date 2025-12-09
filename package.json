@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "security-check": "node ./scripts/security-check.js"
+    "security-check": "node ./scripts/security-check.js",
+    "test-screener": "node ./scripts/test-screener.js",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.0",
     "lucide-react": "^0.555.0",
     "react-dom": "^19.2.0",
-    "@google/genai": "^1.30.0"
+    "@google/genai": "^1.30.0",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
