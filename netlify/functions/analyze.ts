@@ -9,17 +9,37 @@ interface Criterion {
 }
 
 // -- SECURE CREDENTIAL CONFIG --
-// In production, this should be in process.env.TALC_API_KEY
-const APP_SECRET_KEY = process.env.TALC_API_KEY || 'TALC_API_KEY_SECURE_882910';
+// The secret key must be provided via environment variable and MUST NOT
+// have a hard-coded default. Falling back to a literal value here would
+// allow attackers or other apps to discover a usable credential.
+const APP_SECRET_KEY = process.env.TALC_API_KEY || '';
+
+// Control which origins are allowed to access this function from browsers.
+// Provide a comma-separated list in TALC_ALLOWED_ORIGINS. If unset, we
+// default to an empty list (deny-by-default) to avoid accidental wide-open CORS.
+const ALLOWED_ORIGINS = (process.env.TALC_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 export default async (req: Request, context: any) => {
-  // 1. Handle CORS Preflight (Allows external apps to access if needed)
-  if (req.method === "OPTIONS") {
+  // 1. Handle CORS Preflight.
+  // To avoid letting all origins access the endpoint, we echo back only
+  // allowed origins. If no allowed origins are configured, respond with
+  // a 403 so browser-based cross-origin requests will not succeed.
+  const origin = req.headers.get('origin') || '';
+
+  if (req.method === 'OPTIONS') {
+    const allowed = ALLOWED_ORIGINS.length === 0 ? false : ALLOWED_ORIGINS.includes(origin);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'CORS origin not allowed' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+
     return new Response(null, {
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type, x-talc-api-key",
-        "Access-Control-Allow-Methods": "POST, OPTIONS"
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Headers': 'Content-Type, x-talc-api-key',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       }
     });
   }
@@ -30,12 +50,16 @@ export default async (req: Request, context: any) => {
   }
 
   // 3. Security Check (API Key Validation)
-  const clientKey = req.headers.get("x-talc-api-key");
+  // Reject if the server hasn't been configured with a secret. This
+  // prevents accidental use of a baked-in default key.
+  if (!APP_SECRET_KEY) {
+    console.error('Server config error: TALC_API_KEY not set');
+    return new Response(JSON.stringify({ error: 'Server Configuration Error: TALC_API_KEY is missing' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const clientKey = req.headers.get('x-talc-api-key');
   if (clientKey !== APP_SECRET_KEY) {
-    return new Response(JSON.stringify({ error: "Unauthorized: Invalid API Credentials" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" }
-    });
+    return new Response(JSON.stringify({ error: 'Unauthorized: Invalid API Credentials' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
 
   try {
@@ -109,15 +133,16 @@ export default async (req: Request, context: any) => {
     };
 
     // 7. Call Gemini API
-    // Try 'gemini-2.0-flash' first. If the model is unavailable or not
+    // Try 'gemini-1.5-flash' first (preferred). If the model is unavailable or not
     // supported for this method in the current API, automatically try a few
     // fallbacks so the function remains usable in multiple environments.
     const modelCandidates = [
-      'gemini-2.0-flash',
-      'gemini-2.5-flash',
       'gemini-1.5-flash',
       'gemini-1.5',
+      // Some deployments / SDK versions might expose different names; include
+      // fallback textual models so the function can still respond.
       'gemini-1.0',
+      'text-bison@001'
     ];
 
     let response: any | null = null;
@@ -168,12 +193,13 @@ export default async (req: Request, context: any) => {
     if (!text) throw new Error("Empty response from AI model");
 
     // 8. Return Result
-    return new Response(text, {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*" // Allow external access
-      }
-    });
+    // Only return Access-Control-Allow-Origin for allowed origins. If the
+    // request did not include an Origin header (server-to-server), we skip
+    // CORS headers entirely.
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (origin && ALLOWED_ORIGINS.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
+
+    return new Response(text, { headers });
 
   } catch (error: any) {
     console.error("Function Execution Error:", error);

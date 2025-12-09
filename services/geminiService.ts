@@ -3,9 +3,16 @@ import { Criterion, AnalysisResult } from '../types';
 // The endpoint for the Netlify Function
 const API_ENDPOINT = '/.netlify/functions/analyze';
 
-// SECURE CREDENTIALS (Hardcoded for internal app use)
-// External apps should use this same key in the 'x-talc-api-key' header.
-const API_KEY = 'TALC_API_KEY_SECURE_882910';
+// NOTE: Do NOT commit secrets into frontend code. When this application
+// runs in a browser, any injected key becomes public. Instead prefer one
+// of the following:
+// 1. Call a backend endpoint that stores the secret server-side (recommended).
+// 2. Use a short-lived session token from an identity provider (Netlify Identity, OAuth, etc.).
+// For local development you may provide a build-time variable VITE_TALC_API_KEY
+// (but this will be visible in the client bundle and should not be used in production).
+const API_KEY = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TALC_API_KEY
+  ? (import.meta as any).env.VITE_TALC_API_KEY
+  : '';
 
 export const analyzePhoto = async (
   file: File,
@@ -27,11 +34,13 @@ export const analyzePhoto = async (
   // 2. Call the Netlify Function
   // We pass the criteria dynamically so any UI changes are immediately reflected in the API prompt.
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (API_KEY) headers['x-talc-api-key'] = API_KEY;
+
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-talc-api-key': API_KEY
+        ...headers
       },
       body: JSON.stringify({
         imageBase64: base64Data,
