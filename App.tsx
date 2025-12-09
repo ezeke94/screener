@@ -11,9 +11,10 @@ import { Upload, Wand2, Trash2 } from 'lucide-react';
 
 export default function App() {
   const { user } = useAuth();
-  const { criteria, loading: isLoadingCriteria } = useSharedCriteria();
+  const { criteria, loading: isLoadingCriteria, saveCriteria } = useSharedCriteria();
   const [photos, setPhotos] = useState<PhotoData[]>([]);
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   // no UI state for seeding — helper remains in services/criteriaService
 
   // NOTE: Do NOT early-return before declaring all hooks. That causes React hook-order errors
@@ -82,15 +83,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">
-      <Header />
+      <Header onToggleSettings={() => setShowSettings(v => !v)} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8 grid grid-cols-1 lg:grid-cols-12">
-        {/* Left Sidebar: Criteria Configuration */}
+        {/* Left Sidebar: Quick Actions */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Seed button removed; seed helper remains in services/criteriaService */}
-
-          <CriteriaPanel criteria={criteria} setCriteria={() => {}} readOnly={true} />
-          
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h3 className="text-lg font-semibold">Settings</h3>
+            <p className="text-sm text-slate-500">Manage criteria and other configuration.</p>
+            <div className="mt-4">
+              <button onClick={() => setShowSettings(true)} className="px-4 py-2 bg-indigo-600 text-white rounded">Open Settings</button>
+            </div>
+          </div>
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <h3 className="text-indigo-900 font-semibold mb-2 flex items-center gap-2">
               <Upload className="w-5 h-5" /> Upload Photos
@@ -111,6 +115,28 @@ export default function App() {
               />
             </label>
           </div>
+
+          {showSettings && (
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setShowSettings(false)} />
+              <div className="relative z-60 w-[720px] bg-white rounded-xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Settings — Criteria</h2>
+                  <button onClick={() => setShowSettings(false)} className="text-sm text-slate-500">Close</button>
+                </div>
+                {user ? (
+                  <CriteriaPanel criteria={criteria} setCriteria={(c: any) => { saveCriteria(c); }} />
+                ) : (
+                  <div>
+                    <p className="text-sm text-slate-600">You must be logged in to edit criteria. Sign in via the header to manage them.</p>
+                    <div className="mt-4">
+                      <CriteriaPanel criteria={criteria} setCriteria={() => {}} readOnly={true} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Content: Photo Grid */}

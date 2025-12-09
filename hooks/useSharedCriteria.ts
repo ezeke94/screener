@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Criterion } from '../types';
-import { fetchSharedCriteria, subscribeToCriteria } from '../services/criteriaService';
+import { fetchSharedCriteria, subscribeToCriteria, updateSharedCriteria, addCriterion, removeCriterion, updateCriterion } from '../services/criteriaService';
 
 interface UseSharedCriteriaReturn {
   criteria: Criterion[];
   loading: boolean;
   error: Error | null;
+  // Admin operations (require authenticated user according to Firestore rules)
+  saveCriteria: (criteria: Criterion[]) => Promise<void>;
+  addCriterion: (c: Criterion) => Promise<void>;
+  updateCriterion: (c: Criterion) => Promise<void>;
+  removeCriterion: (id: string) => Promise<void>;
 }
 
 export function useSharedCriteria(): UseSharedCriteriaReturn {
@@ -38,5 +43,23 @@ export function useSharedCriteria(): UseSharedCriteriaReturn {
     return () => unsubscribe();
   }, []);
 
-  return { criteria, loading, error };
+  // Admin wrappers
+  const saveCriteria = async (newCriteria: Criterion[]) => {
+    await updateSharedCriteria(newCriteria);
+  };
+
+  const addCrit = async (c: Criterion) => {
+    await addCriterion(c);
+  };
+
+  const updateCrit = async (c: Criterion) => {
+    await updateCriterion(c);
+  };
+
+  const removeCrit = async (id: string) => {
+    await removeCriterion(id);
+  };
+
+  return { criteria, loading, error, saveCriteria, addCriterion: addCrit, updateCriterion: updateCrit, removeCriterion: removeCrit };
 }
+

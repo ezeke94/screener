@@ -104,3 +104,39 @@ export async function seedSharedCriteria() {
   ];
   await setDoc(doc(db, CRITERIA_COLLECTION, CRITERIA_DOC_ID), { criteria });
 }
+
+/**
+ * Overwrite the shared criteria document with the provided list.
+ * Requires authenticated user in Firestore rules.
+ */
+export async function updateSharedCriteria(criteria: Criterion[]) {
+  const docRef = doc(db, CRITERIA_COLLECTION, CRITERIA_DOC_ID);
+  await setDoc(docRef, { criteria });
+}
+
+/**
+ * Convenience helpers that modify the criteria list and write back.
+ */
+export async function addCriterion(newCriterion: Criterion) {
+  const docRef = doc(db, CRITERIA_COLLECTION, CRITERIA_DOC_ID);
+  const snap = await getDoc(docRef);
+  const current: Criterion[] = snap.exists() ? (snap.data().criteria || []) : getDefaultCriteria();
+  const updated = [...current, newCriterion];
+  await setDoc(docRef, { criteria: updated });
+}
+
+export async function removeCriterion(id: string) {
+  const docRef = doc(db, CRITERIA_COLLECTION, CRITERIA_DOC_ID);
+  const snap = await getDoc(docRef);
+  const current: Criterion[] = snap.exists() ? (snap.data().criteria || []) : getDefaultCriteria();
+  const updated = current.filter(c => c.id !== id);
+  await setDoc(docRef, { criteria: updated });
+}
+
+export async function updateCriterion(updatedCriterion: Criterion) {
+  const docRef = doc(db, CRITERIA_COLLECTION, CRITERIA_DOC_ID);
+  const snap = await getDoc(docRef);
+  const current: Criterion[] = snap.exists() ? (snap.data().criteria || []) : getDefaultCriteria();
+  const updated = current.map(c => c.id === updatedCriterion.id ? updatedCriterion : c);
+  await setDoc(docRef, { criteria: updated });
+}

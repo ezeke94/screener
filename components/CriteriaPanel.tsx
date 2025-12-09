@@ -4,7 +4,7 @@ import { Plus, X, AlertCircle, CheckCircle2, Sliders } from 'lucide-react';
 
 interface CriteriaPanelProps {
   criteria: Criterion[];
-  setCriteria: React.Dispatch<React.SetStateAction<Criterion[]>>;
+  setCriteria: (newCriteria: Criterion[]) => void;
   readOnly?: boolean;
 }
 

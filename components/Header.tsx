@@ -2,9 +2,13 @@ import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onToggleSettings?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onToggleSettings }) => {
   const { user } = useAuth();
 
   const handleLogout = async () => {
@@ -34,6 +38,13 @@ export const Header: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-4">
+           <button
+             onClick={() => onToggleSettings && onToggleSettings()}
+             aria-label="Settings"
+             className="p-2 rounded-md hover:bg-white/10 text-white"
+           >
+             <Settings size={18} />
+           </button>
            <div className="hidden sm:block">
              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-100 text-xs border border-indigo-500/30">
                Internal Use Only
