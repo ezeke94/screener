@@ -7,7 +7,6 @@ import { analyzePhoto } from './services/geminiService';
 import { useAuth } from './hooks/useAuth';
 import { useSharedCriteria } from './hooks/useSharedCriteria';
 // seedSharedCriteria is available as a helper in services/criteriaService, no UI trigger
-import { LoginPage } from './components/LoginPage';
 import { Upload, Wand2, Trash2 } from 'lucide-react';
 
 export default function App() {
@@ -78,18 +77,8 @@ export default function App() {
 
   const pendingCount = photos.filter(p => p.status === 'pending').length;
 
-  // Render the login page if user is not authenticated.
-  // We still keep all hooks declared above to maintain stable hook order.
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col font-sans text-slate-900">
-        <Header />
-        <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoginPage onLoginSuccess={() => {}} />
-        </main>
-      </div>
-    );
-  }
+  // The app allows viewing criteria and using the screener without login.
+  // Authentication remains available for admin actions via the Header component.
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900">

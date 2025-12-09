@@ -20,13 +20,44 @@ export default async (req: Request, context: any) => {
   }
 
   try {
-    // 3. Parse and validate request
+    // 3. Parse and validate request body (image only). Criteria will be fetched
+    //    server-side from Firestore to ensure the authoritative, up-to-date set.
     const body = await req.json();
-    const { imageBase64, mimeType, criteria } = body;
+    const { imageBase64, mimeType } = body;
 
-    if (!imageBase64 || !criteria) {
-      return new Response(JSON.stringify({ error: "Bad Request: Missing 'imageBase64' or 'criteria'" }), {
+    if (!imageBase64) {
+      return new Response(JSON.stringify({ error: "Bad Request: Missing 'imageBase64'" }), {
         status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 3b. Fetch authoritative criteria from Firestore (public read expected)
+    const projectId = process.env.FIREBASE_PROJECT_ID || 'screen-talc';
+    const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/config/shared-criteria`;
+
+    let criteria: any[] = [];
+    try {
+      const criteriaResp = await fetch(firestoreUrl);
+      if (!criteriaResp.ok) {
+        throw new Error(`Failed to fetch criteria: ${criteriaResp.status} ${criteriaResp.statusText}`);
+      }
+      const criteriaDoc = await criteriaResp.json();
+      // Parse Firestore document format into array of Criterion
+      const rawValues = criteriaDoc?.fields?.criteria?.arrayValue?.values || [];
+      criteria = rawValues.map((v: any) => {
+        const f = v.mapValue.fields;
+        return {
+          id: f.id?.stringValue || (f.label?.stringValue || Math.random().toString(36).slice(2)),
+          label: f.label?.stringValue || '',
+          type: f.type?.stringValue || 'desired',
+          strictness: f.strictness?.stringValue || undefined
+        };
+      });
+    } catch (err) {
+      console.error('Error fetching shared criteria from Firestore:', err);
+      return new Response(JSON.stringify({ error: 'Failed to load shared criteria from server' }), {
+        status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
