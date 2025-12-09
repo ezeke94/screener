@@ -42,7 +42,8 @@ export default async (req: Request, context: any) => {
     }
 
     // Forward to the real analyze function with API key in header
-    const analyzeUrl = `${req.url.split('/.netlify')[0]}/.netlify/functions/analyze`;
+    // Use a relative URL that Netlify can route to the analyze function
+    const analyzeUrl = '/.netlify/functions/analyze';
     const analyzeResponse = await fetch(analyzeUrl, {
       method: 'POST',
       headers: {

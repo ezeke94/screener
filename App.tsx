@@ -1,29 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CriteriaPanel } from './components/CriteriaPanel';
 import { PhotoCard } from './components/PhotoCard';
 import { Criterion, PhotoData } from './types';
 import { analyzePhoto } from './services/geminiService';
+import { useCriteria } from './hooks/useCriteria';
 import { Upload, Wand2, Trash2 } from 'lucide-react';
 
-const DEFAULT_CRITERIA: Criterion[] = [
-  // Technical Basics
-  { id: '1', label: 'Blurry or out of focus', type: 'forbidden', strictness: 'Medium' },
-  { id: '2', label: 'Poor lighting / Too dark', type: 'forbidden', strictness: 'Low' },
-  
-  // TALC - PHYSIS Specific Forbidden Criteria
-  { id: '3', label: 'Negative interactions (angry faces, pulling child)', type: 'forbidden', strictness: 'High' },
-  { id: '4', label: 'Sad expressions', type: 'forbidden', strictness: 'Medium' },
-  { id: '5', label: 'Rigid posing (staged, standing in lines)', type: 'forbidden', strictness: 'Medium' },
-  { id: '6', label: 'Inappropriate attire or body exposure', type: 'forbidden', strictness: 'High' },
-  { id: '7', label: 'Untidy background (brooms, garbage, food, mess)', type: 'forbidden', strictness: 'Medium' },
-
-  // Desired
-  { id: '8', label: 'Happy / Smiling expression', type: 'desired' },
-];
-
 export default function App() {
-  const [criteria, setCriteria] = useState<Criterion[]>(DEFAULT_CRITERIA);
+  const { criteria, isLoading: isLoadingCriteria, saveCriteria } = useCriteria();
   const [photos, setPhotos] = useState<PhotoData[]>([]);
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
 
@@ -90,14 +75,20 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8 grid grid-cols-1 lg:grid-cols-12">
         {/* Left Sidebar: Criteria Configuration */}
         <div className="lg:col-span-4 space-y-6">
-          <CriteriaPanel criteria={criteria} setCriteria={setCriteria} />
+          {isLoadingCriteria ? (
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+              <p className="text-slate-500">Loading criteria...</p>
+            </div>
+          ) : (
+            <CriteriaPanel criteria={criteria} setCriteria={saveCriteria} />
+          )}
           
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <h3 className="text-indigo-900 font-semibold mb-2 flex items-center gap-2">
-              <Upload className="w-5 h-5" /> Quick Upload
+              <Upload className="w-5 h-5" /> Upload Photos
             </h3>
             <p className="text-indigo-700 text-sm mb-4">
-              Upload photos to start screening against your criteria.
+              Select photos to evaluate against your configured criteria.
             </p>
             <label className="block w-full cursor-pointer">
               <span className="flex items-center justify-center w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium shadow-sm">

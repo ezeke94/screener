@@ -8,6 +8,7 @@
     "build": "vite build",
     "security-check": "node ./scripts/security-check.js",
     "test-screener": "node ./scripts/test-screener.js",
+    "test-integration": "node ./scripts/test-integration.js",
     "preview": "vite preview"
   },
   "dependencies": {

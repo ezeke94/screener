@@ -1,0 +1,32 @@
+{
+  "name": "Photo Screening Criteria",
+  "description": "Default criteria for evaluating photo quality in the TALC screener",
+  "criteria": [
+    {
+      "id": "blur",
+      "label": "No strong blur",
+      "type": "forbidden",
+      "strictness": "High",
+      "description": "Photo must be clear and in focus"
+    },
+    {
+      "id": "lighting",
+      "label": "Adequate lighting",
+      "type": "forbidden",
+      "strictness": "Medium",
+      "description": "Subject must be clearly visible with good lighting"
+    },
+    {
+      "id": "composition",
+      "label": "Subject visible and centered",
+      "type": "desired",
+      "description": "Subject should be the main focus of the image"
+    },
+    {
+      "id": "background",
+      "label": "Clean background",
+      "type": "desired",
+      "description": "Background should not be distracting"
+    }
+  ]
+}
