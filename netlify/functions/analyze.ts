@@ -133,16 +133,14 @@ export default async (req: Request, context: any) => {
     };
 
     // 7. Call Gemini API
-    // Try 'gemini-1.5-flash' first (preferred). If the model is unavailable or not
-    // supported for this method in the current API, automatically try a few
-    // fallbacks so the function remains usable in multiple environments.
+    // Prefer the newest available flash model; fall back through supported names.
+    // Remove legacy text-bison which is not available on newer endpoints.
     const modelCandidates = [
+      'gemini-2.0-flash',
       'gemini-1.5-flash',
-      'gemini-1.5',
-      // Some deployments / SDK versions might expose different names; include
-      // fallback textual models so the function can still respond.
-      'gemini-1.0',
-      'text-bison@001'
+      'gemini-1.5-pro',
+      'gemini-1.5-flash-8b',
+      'gemini-1.0-pro'
     ];
 
     let response: any | null = null;
