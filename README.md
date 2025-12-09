@@ -54,6 +54,49 @@ View your app in AI Studio: https://ai.studio/apps/drive/1QRgp_0mQVt5_Rm1kGMXrrj
    npm run dev
    ```
 
+## API usage (for other apps)
+
+Base URL (production): `https://screener-talc.netlify.app/.netlify/functions/analyze`
+
+Headers
+- `Content-Type: application/json`
+- `x-talc-api-key: <TALC_API_KEY>` (required)
+
+Request body
+```json
+{
+   "imageBase64": "<base64-encoded image>",
+   "mimeType": "image/jpeg",
+   "criteria": [
+      { "id": "1", "label": "No strong blur", "type": "forbidden", "strictness": "High" },
+      { "id": "2", "label": "Subject centered", "type": "desired" }
+   ]
+}
+```
+
+Response shape
+```json
+{
+   "status": "PASS" | "FAIL",
+   "reasons": ["..."],
+   "feedback": "short tip"
+}
+```
+
+Example curl (PowerShell)
+```powershell
+$b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes('./test-photo.jpg'))
+curl.exe -X POST "https://screener-talc.netlify.app/.netlify/functions/analyze" `
+   -H "Content-Type: application/json" `
+   -H "x-talc-api-key: $env:TALC_API_KEY" `
+   -d ($("{\"imageBase64\":\"$b64\",\"mimeType\":\"image/jpeg\",\"criteria\":[{\"id\":\"1\",\"label\":\"No strong blur\",\"type\":\"forbidden\",\"strictness\":\"High\"}]}"))
+```
+
+Notes
+- CORS is controlled by `TALC_ALLOWED_ORIGINS` (comma-separated) in Netlify env.
+- Model order: `gemini-2.0-flash`, then `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.5-flash-8b`, `gemini-1.0-pro`.
+- Local test helper: `npm run test-screener -- ./path/to/image.jpg --url http://localhost:8888/.netlify/functions/analyze --key <TALC_API_KEY>`
+
 Troubleshooting
 - 404 on `/.netlify/functions/analyze`: you need to run Netlify dev or functions server (see step 4).
 - 500 errors from the function: ensure `API_KEY` is set in your `.env` so the function can call Gemini.
