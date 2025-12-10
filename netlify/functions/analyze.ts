@@ -87,29 +87,23 @@ export default async (req: Request, context: any) => {
     const ai = new GoogleGenAI({ apiKey: googleApiKey });
 
     // 6. Construct Dynamic Prompt based on provided criteria
+    // COST OPTIMIZATION: Keep prompt concise to reduce input tokens
     const forbidden = (criteria as Criterion[]).filter(c => c.type === 'forbidden');
     const desired = (criteria as Criterion[]).filter(c => c.type === 'desired');
 
     const promptText = `
-      Act as a professional photo screener for a child education organization (TALC).
-      Your task is to analyze the provided image to see if it meets quality standards.
+Analyze this photo for a child education organization.
 
-      Strictly evaluate the image based on the following FORBIDDEN criteria.
-      If ANY of these are met based on their strictness level, you MUST Reject the photo.
-      
-      FORBIDDEN CRITERIA (Reject if present):
-      ${forbidden.map(c => `- ${c.label} (Strictness Level: ${c.strictness || 'Medium'})`).join('\n')}
+REJECT if ANY forbidden criteria are met (based on strictness):
+${forbidden.map(c => `- ${c.label} (${c.strictness || 'Medium'})`).join('\n')}
 
-      DESIRED CRITERIA (Good to have, but not mandatory):
-      ${desired.map(c => `- ${c.label}`).join('\n')}
+DESIRED (optional, not mandatory):
+${desired.map(c => `- ${c.label}`).join('\n')}
 
-      Guidelines for Strictness:
-      - Low: Only flag if the issue is severe and obvious.
-      - Medium: Flag if the issue is noticeable.
-      - High: Flag even minor occurrences.
+Strictness: Low=severe only, Medium=noticeable, High=minor occurrences.
 
-      Return a JSON object indicating PASS or FAIL with reasons.
-    `;
+Return JSON with status (PASS/FAIL), reasons array (max 3 items), and brief feedback (max 15 words).
+    `.trim();
 
     const responseSchema: Schema = {
       type: Type.OBJECT,
@@ -133,12 +127,11 @@ export default async (req: Request, context: any) => {
     };
 
     // 7. Call Gemini API
-    // Use gemini-2.0-flash as the primary model.
-    // If it fails, try fallbacks for compatibility across different API versions.
+    // Use gemini-1.5-flash as the primary model (cheapest, best value).
+    // Only fallback if absolutely necessary.
     const modelCandidates = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro'
+      'gemini-1.5-flash',     // Cheapest - try first
+      'gemini-1.5-pro'        // Only if flash fails
     ];
 
     let response: any | null = null;
@@ -158,7 +151,11 @@ export default async (req: Request, context: any) => {
           },
           config: {
             responseMimeType: 'application/json',
-            responseSchema: responseSchema
+            responseSchema: responseSchema,
+            maxOutputTokens: 500,      // Strict limit to control costs
+            temperature: 0.1,           // Lower = more consistent, cheaper
+            topP: 0.95,                // Reduce token sampling diversity
+            topK: 40                    // Limit token candidates
           }
         });
 

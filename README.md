@@ -15,17 +15,30 @@ View your app in AI Studio: https://ai.studio/apps/drive/1QRgp_0mQVt5_Rm1kGMXrrj
 
 1. Install dependencies:
    `npm install`
-2. Create an `.env` file (or use `.env.local`) and set the following keys:
+2. Create an `.env.local` file and configure your environment variables:
 
-   - `API_KEY` — your Google / Gemini API key (required by the serverless function)
-   - `TALC_API_KEY` — optional server-side API key the client uses to talk to the function;
-     the function has a built-in default for local testing, but you should set your own secret for real deployments.
-
-   You can copy `./.env.example` and fill in the values:
    ```powershell
-   cp .env.example .env
-   # then edit .env and add your real API_KEY
+   # Copy the example file
+   cp .env.example .env.local
    ```
+
+   **Required Environment Variables:**
+
+   **Frontend (Vite - requires VITE_ prefix):**
+   - `VITE_FIREBASE_API_KEY` — Firebase API key
+   - `VITE_FIREBASE_AUTH_DOMAIN` — Firebase auth domain
+   - `VITE_FIREBASE_PROJECT_ID` — Firebase project ID
+   - `VITE_FIREBASE_STORAGE_BUCKET` — Firebase storage bucket
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID` — Firebase messaging sender ID
+   - `VITE_FIREBASE_APP_ID` — Firebase app ID
+
+   **Backend (Netlify Functions):**
+   - `API_KEY` or `GEMINI_API_KEY` — Your Google / Gemini API key (required for AI analysis)
+   - `TALC_API_KEY` — Server-side API key for securing the analyze endpoint
+   - `TALC_ALLOWED_ORIGINS` — Comma-separated list of allowed CORS origins
+   - `FIREBASE_PROJECT_ID` — Firebase project ID (for Firestore access)
+
+   See `.env.example` for a complete template with all required variables.
 
 3. Run the app for frontend-only development:
 

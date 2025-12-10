@@ -2,14 +2,21 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// Load Firebase config from environment variables
+// Vite exposes env vars with VITE_ prefix as import.meta.env.VITE_*
 const firebaseConfig = {
-  apiKey: 'AIzaSyDetsRlOQaYSl_3bkUKzT3mvyJwm1WC_ik',
-  authDomain: 'screen-talc.firebaseapp.com',
-  projectId: 'screen-talc',
-  storageBucket: 'screen-talc.firebasestorage.app',
-  messagingSenderId: '181279360160',
-  appId: '1:181279360160:web:ea181215bc2356ba22b5c5'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
 };
+
+// Validate that required Firebase config is present
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Firebase configuration is incomplete. Please check your environment variables.');
+}
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
